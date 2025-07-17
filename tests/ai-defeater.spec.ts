@@ -7,7 +7,7 @@ test.describe('AI Defeater', () => {
 
   test('should display the main UI elements', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'AI Defeater' })).toBeVisible();
-    await expect(page.getByText('Insert random nonsense into your text')).toBeVisible();
+    await expect(page.getByText('Using cutting-edge AI technology to make AI completely useless')).toBeVisible();
     
     await expect(page.getByLabel('Defeat Mode')).toBeVisible();
     await expect(page.getByLabel('Your Original Text')).toBeVisible();
@@ -30,11 +30,11 @@ test.describe('AI Defeater', () => {
     expect(defeatedText).toContain('This is my original text');
     expect(defeatedText.length).toBeGreaterThanOrEqual(testText.length);
     
-    await expect(page.getByText('Statistics')).toBeVisible();
+    await expect(page.getByText('Performance Metrics')).toBeVisible();
     await expect(page.getByText('Original length:')).toBeVisible();
-    await expect(page.getByText('Defeated length:')).toBeVisible();
-    await expect(page.getByText('Nonsense inserted:')).toBeVisible();
-    await expect(page.getByText('Size increase:')).toBeVisible();
+    await expect(page.getByText('Enhanced length:')).toBeVisible();
+    await expect(page.getByText('Nonsense density:')).toBeVisible();
+    await expect(page.getByText('Confusion factor:')).toBeVisible();
   });
 
   test('should work with different defeat modes', async ({ page }) => {
@@ -50,7 +50,9 @@ test.describe('AI Defeater', () => {
       const defeatedTextElement = page.locator('.bg-gray-700.border.border-gray-600.rounded-md.p-4');
       const defeatedText = await defeatedTextElement.innerText();
       
-      expect(defeatedText).toContain('Short test text');
+      expect(defeatedText).toContain('Short');
+      expect(defeatedText).toContain('test');
+      expect(defeatedText).toContain('text');
       
       await page.getByRole('button', { name: 'Clear' }).click();
     }
@@ -67,14 +69,14 @@ test.describe('AI Defeater', () => {
     
     await expect(page.getByLabel('Your Original Text')).toHaveValue('');
     await expect(page.getByText('AI-Defeated Text')).not.toBeVisible();
-    await expect(page.getByText('Statistics')).not.toBeVisible();
+    await expect(page.getByText('Performance Metrics')).not.toBeVisible();
   });
 
   test('should not process empty text', async ({ page }) => {
     await page.getByRole('button', { name: 'Defeat AI' }).click();
     
     await expect(page.getByText('AI-Defeated Text')).not.toBeVisible();
-    await expect(page.getByText('Statistics')).not.toBeVisible();
+    await expect(page.getByText('Performance Metrics')).not.toBeVisible();
   });
 
   test('should handle long text properly', async ({ page }) => {
@@ -90,7 +92,7 @@ test.describe('AI Defeater', () => {
     expect(defeatedText.length).toBeGreaterThan(longText.length);
     
     const statsText = await page.locator('.bg-gray-700.rounded-md.p-4').last().innerText();
-    expect(statsText).toContain('phrases');
+    expect(statsText).toContain('insertions');
   });
 
   test('should copy text to clipboard', async ({ page, browserName }) => {
