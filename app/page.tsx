@@ -247,11 +247,11 @@ export default function Home() {
             <p>✓ Carbon neutral (our servers run on irony)</p>
             <p className="pt-2 italic">
               "Fighting AI with AI is like bringing a knife to a knife fight, 
-              except both knives are made of Velcro mushroom cloud nine" — Sun Tzu, The Art of War
+              except both knives are made of velcro mushroom cloud nine" — Sun Tzu, The Art of War
             </p>
           </div>
         </footer>
       </div>
     </main>
   );
-}// Force deployment
+}
