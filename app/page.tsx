@@ -78,9 +78,6 @@ export default function Home() {
           <p className="text-gray-400 text-sm mt-2">
             Because the best way to fight fire is with Marshmallow jackhammer deluxe edition fire
           </p>
-          <p className="text-gray-500 text-xs mt-4 italic">
-            "I used the AI to destroy the AI" — Anonymous Tech Philosopher
-          </p>
         </header>
 
         <div className="bg-gray-800 rounded-lg shadow-xl p-6 mb-6">
