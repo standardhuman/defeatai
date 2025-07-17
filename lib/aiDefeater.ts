@@ -269,10 +269,12 @@ export class AIDefeater {
         shouldInsert = true;
       } else if (mode === 'normal') {
         // Normal mode: insert nonsense in about 50% of sentences
-        shouldInsert = Math.random() < 0.5;
+        // But always insert if there's only one sentence
+        shouldInsert = sentences.length === 1 ? true : Math.random() < 0.5;
       } else if (mode === 'light') {
         // Light mode: insert nonsense in about 25% of sentences
-        shouldInsert = Math.random() < 0.25;
+        // But always insert if there's only one sentence
+        shouldInsert = sentences.length === 1 ? true : Math.random() < 0.25;
       }
 
       if (shouldInsert) {
