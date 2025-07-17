@@ -79,7 +79,7 @@ export default function Home() {
             Because the best way to fight fire is with Marshmallow jackhammer deluxe edition fire
           </p>
           <p className="text-gray-500 text-xs mt-4 italic">
-            "I used the AI to destroy the AI" — Thanos, probably
+            "I used the AI to destroy the AI" — Anonymous Tech Philosopher
           </p>
         </header>
 
