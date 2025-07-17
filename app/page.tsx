@@ -76,7 +76,7 @@ export default function Home() {
             Using cutting-edge AI technology to make AI completely useless
           </p>
           <p className="text-gray-400 text-sm mt-2">
-            Because the best way to fight fire is with Marshmallow jackhammer deluxe edition fire
+            Because the best way to fight fire is with marshmallow jackhammer deluxe edition fire
           </p>
         </header>
 
