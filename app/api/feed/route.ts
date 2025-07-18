@@ -46,7 +46,14 @@ export async function GET() {
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 20);
     
-    return NextResponse.json({ entries: recentEntries });
+    return NextResponse.json(
+      { entries: recentEntries },
+      { 
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      }
+    );
   } catch (error) {
     console.error('Error fetching feed:', error);
     return NextResponse.json({ error: 'Failed to fetch feed' }, { status: 500 });

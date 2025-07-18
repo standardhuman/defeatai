@@ -17,7 +17,9 @@ export default function PublicFeed() {
 
   const fetchFeed = async () => {
     try {
-      const response = await fetch('/api/feed');
+      const response = await fetch('/api/feed', {
+        cache: 'no-store',
+      });
       if (!response.ok) throw new Error('Failed to fetch feed');
       
       const data = await response.json();
@@ -33,8 +35,8 @@ export default function PublicFeed() {
   useEffect(() => {
     fetchFeed();
     
-    // Refresh feed every 30 seconds
-    const interval = setInterval(fetchFeed, 30000);
+    // Refresh feed every 10 seconds
+    const interval = setInterval(fetchFeed, 10000);
     return () => clearInterval(interval);
   }, []);
 
