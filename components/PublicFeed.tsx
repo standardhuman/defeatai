@@ -149,20 +149,8 @@ export default function PublicFeed() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">Original:</div>
-                  <div className="text-sm text-gray-300 bg-gray-800 p-2 rounded">
-                    {entry.original}
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-400 mb-1">AI-Defeated:</div>
-                  <div className="text-sm text-white bg-gray-800 p-2 rounded">
-                    {entry.defeated}
-                  </div>
-                </div>
+              <div className="text-sm text-white bg-gray-800 p-3 rounded">
+                {entry.defeated}
               </div>
             </div>
           ))}

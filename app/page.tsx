@@ -17,8 +17,7 @@ export default function Home() {
     nonsenseInserted: number;
     percentageIncrease: number;
   } | null>(null);
-  const [shareToFeed, setShareToFeed] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
+  const [keepPrivate, setKeepPrivate] = useState(false);
 
   // Load custom phrases from localStorage on mount
   useEffect(() => {
@@ -33,13 +32,33 @@ export default function Home() {
     localStorage.setItem('customPhrases', JSON.stringify(customPhrases));
   }, [customPhrases]);
 
-  const handleDefeat = () => {
+  const handleDefeat = async () => {
     if (!inputText.trim()) return;
     
     const defeater = new AIDefeater(customPhrases);
     const defeated = defeater.defeatAI(inputText, mode);
     setOutputText(defeated);
     setStats(defeater.getStats(inputText, defeated));
+    
+    // Automatically share to feed unless user wants privacy
+    if (!keepPrivate) {
+      try {
+        await fetch('/api/feed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            original: inputText,
+            defeated: defeated,
+            mode,
+          }),
+        });
+      } catch (error) {
+        console.error('Error sharing to feed:', error);
+        // Don't show error to user - just fail silently
+      }
+    }
   };
 
   const handleCopy = () => {
@@ -63,38 +82,6 @@ export default function Home() {
     setCustomPhrases(customPhrases.filter((_, i) => i !== index));
   };
 
-  const handleShareToFeed = async () => {
-    if (!inputText.trim() || !outputText.trim()) return;
-    
-    setIsSharing(true);
-    
-    try {
-      const response = await fetch('/api/feed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          original: inputText,
-          defeated: outputText,
-          mode,
-        }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to share');
-      }
-      
-      // Success - could show a toast notification here
-      setShareToFeed(false);
-    } catch (error) {
-      console.error('Error sharing to feed:', error);
-      alert('Failed to share to feed. Please try again.');
-    } finally {
-      setIsSharing(false);
-    }
-  };
 
   const shareToTwitter = () => {
     const text = `Check out this AI-defeated text: "${outputText.substring(0, 200)}${outputText.length > 200 ? '...' : ''}"`;
@@ -204,22 +191,36 @@ export default function Home() {
             />
           </div>
 
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={handleDefeat}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-md font-semibold transition-colors duration-200 relative group"
-            >
-              Defeat AI
-              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-700 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Algorithm confidence: 99.97%
-              </span>
-            </button>
-            <button
-              onClick={handleClear}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors duration-200"
-            >
-              Clear
-            </button>
+          <div className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <button
+                onClick={handleDefeat}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-md font-semibold transition-colors duration-200 relative group"
+              >
+                Defeat AI
+                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-700 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Algorithm confidence: 99.97%
+                </span>
+              </button>
+              <button
+                onClick={handleClear}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors duration-200"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex items-center justify-center">
+              <input
+                type="checkbox"
+                id="keepPrivate"
+                checked={keepPrivate}
+                onChange={(e) => setKeepPrivate(e.target.checked)}
+                className="rounded text-blue-600 mr-2"
+              />
+              <label htmlFor="keepPrivate" className="text-sm text-gray-400">
+                Keep my results private
+              </label>
+            </div>
           </div>
 
           {outputText && (
@@ -273,21 +274,7 @@ export default function Home() {
 
               {/* Sharing Section */}
               <div className="bg-gray-700 rounded-md p-4 mt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">Share Your Result</h3>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="shareToFeed"
-                      checked={shareToFeed}
-                      onChange={(e) => setShareToFeed(e.target.checked)}
-                      className="rounded"
-                    />
-                    <label htmlFor="shareToFeed" className="text-sm text-gray-300">
-                      Add to community feed
-                    </label>
-                  </div>
-                </div>
+                <h3 className="font-semibold mb-3">Share on Social Media</h3>
                 
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -305,18 +292,13 @@ export default function Home() {
                     <span>📘</span>
                     <span>Facebook</span>
                   </button>
-                  
-                  {shareToFeed && (
-                    <button
-                      onClick={handleShareToFeed}
-                      disabled={isSharing}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      <span>{isSharing ? '⏳' : '🌐'}</span>
-                      <span>{isSharing ? 'Sharing...' : 'Share to Feed'}</span>
-                    </button>
-                  )}
                 </div>
+                
+                {!keepPrivate && (
+                  <p className="text-xs text-gray-400 mt-3">
+                    ✓ Your result has been added to the community feed
+                  </p>
+                )}
               </div>
             </>
           )}
