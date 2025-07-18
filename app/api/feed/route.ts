@@ -7,6 +7,7 @@ interface FeedEntry {
   defeated: string;
   timestamp: number;
   mode: string;
+  likes: number;
 }
 
 // Initialize Redis client
@@ -91,7 +92,8 @@ export async function POST(request: NextRequest) {
       original: original.trim(),
       defeated: defeated.trim(),
       timestamp: Date.now(),
-      mode
+      mode,
+      likes: 0
     };
     
     if (redis) {

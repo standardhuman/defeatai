@@ -8,12 +8,14 @@ interface FeedEntry {
   defeated: string;
   timestamp: number;
   mode: string;
+  likes: number;
 }
 
 export default function PublicFeed() {
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
   const fetchFeed = async () => {
     try {
@@ -33,6 +35,12 @@ export default function PublicFeed() {
   };
 
   useEffect(() => {
+    // Load liked posts from localStorage
+    const saved = localStorage.getItem('likedPosts');
+    if (saved) {
+      setLikedPosts(new Set(JSON.parse(saved)));
+    }
+    
     fetchFeed();
     
     // Refresh feed every 10 seconds
@@ -82,6 +90,51 @@ export default function PublicFeed() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleLike = async (entryId: string) => {
+    const isLiked = likedPosts.has(entryId);
+    const action = isLiked ? 'unlike' : 'like';
+    
+    try {
+      const response = await fetch('/api/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          entryId,
+          action,
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update local state
+        const newLikedPosts = new Set(likedPosts);
+        if (isLiked) {
+          newLikedPosts.delete(entryId);
+        } else {
+          newLikedPosts.add(entryId);
+        }
+        setLikedPosts(newLikedPosts);
+        
+        // Save to localStorage
+        localStorage.setItem('likedPosts', JSON.stringify(Array.from(newLikedPosts)));
+        
+        // Update the entry's like count
+        setEntries(prevEntries => 
+          prevEntries.map(entry => 
+            entry.id === entryId 
+              ? { ...entry, likes: data.likes }
+              : entry
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+    }
   };
 
   if (loading) {
@@ -134,28 +187,43 @@ export default function PublicFeed() {
                     {formatTime(entry.timestamp)}
                   </span>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => shareToTwitter(entry)}
-                    className="text-blue-400 hover:text-blue-300 text-sm"
-                    title="Share on Twitter"
+                    onClick={() => handleLike(entry.id)}
+                    className={`flex items-center space-x-1 text-sm ${
+                      likedPosts.has(entry.id) 
+                        ? 'text-red-500 hover:text-red-400' 
+                        : 'text-gray-400 hover:text-gray-300'
+                    }`}
+                    title={likedPosts.has(entry.id) ? 'Unlike' : 'Like'}
                   >
-                    🐦
+                    <span>{likedPosts.has(entry.id) ? '❤️' : '🤍'}</span>
+                    <span>{entry.likes || 0}</span>
                   </button>
-                  <button
-                    onClick={() => shareToFacebook(entry)}
-                    className="text-blue-600 hover:text-blue-500 text-sm"
-                    title="Share on Facebook"
-                  >
-                    📘
-                  </button>
-                  <button
-                    onClick={() => copyToClipboard(entry.defeated)}
-                    className="text-gray-400 hover:text-gray-300 text-sm"
-                    title="Copy defeated text"
-                  >
-                    📋
-                  </button>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => shareToTwitter(entry)}
+                      className="text-blue-400 hover:text-blue-300 text-sm"
+                      title="Share on Twitter"
+                    >
+                      🐦
+                    </button>
+                    <button
+                      onClick={() => shareToFacebook(entry)}
+                      className="text-blue-600 hover:text-blue-500 text-sm"
+                      title="Share on Facebook"
+                    >
+                      📘
+                    </button>
+                    <button
+                      onClick={() => copyToClipboard(entry.defeated)}
+                      className="text-gray-400 hover:text-gray-300 text-sm"
+                      title="Copy defeated text"
+                    >
+                      📋
+                    </button>
+                  </div>
                 </div>
               </div>
               
