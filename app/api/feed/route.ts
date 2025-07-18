@@ -63,7 +63,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { original, defeated, mode } = await request.json();
+    const body = await request.json();
+    const { original, defeated, mode } = body;
+    
+    // Bot protection: reject if honeypot field is present
+    if (body.honeypot) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
     
     // Basic validation
     if (!original || !defeated || !mode) {

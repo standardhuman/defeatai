@@ -9,6 +9,7 @@ export default function Home() {
   const [outputText, setOutputText] = useState('');
   const [mode, setMode] = useState<DefeaterMode>('normal');
   const [customPhrases, setCustomPhrases] = useState<string[]>([]);
+  const [honeypot, setHoneypot] = useState('');
   const [stats, setStats] = useState<{
     originalLength: number;
     defeatedLength: number;
@@ -32,6 +33,12 @@ export default function Home() {
 
   const handleDefeat = async () => {
     if (!inputText.trim()) return;
+    
+    // Bot protection: if honeypot is filled, silently reject
+    if (honeypot) {
+      console.log('Bot detected');
+      return;
+    }
     
     const defeater = new AIDefeater(customPhrases);
     const defeated = defeater.defeatAI(inputText, mode);
@@ -137,6 +144,16 @@ export default function Home() {
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Enter your text here..."
               className="w-full h-40 px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            {/* Honeypot field - hidden from users but visible to bots */}
+            <input
+              type="text"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ position: 'absolute', left: '-9999px' }}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
             />
           </div>
 

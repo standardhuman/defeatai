@@ -11,12 +11,18 @@ interface FeedEntry {
   likes: number;
 }
 
+interface LikeRecord {
+  timestamp: number;
+  count: number;
+}
+
 export default function PublicFeed() {
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [filterMode, setFilterMode] = useState<'recent' | 'likes'>('recent');
+  const [likeLimits, setLikeLimits] = useState<Record<string, LikeRecord>>({});
 
   const fetchFeed = async () => {
     try {
@@ -40,6 +46,25 @@ export default function PublicFeed() {
     const saved = localStorage.getItem('likedPosts');
     if (saved) {
       setLikedPosts(new Set(JSON.parse(saved)));
+    }
+    
+    // Load like limits from localStorage
+    const savedLimits = localStorage.getItem('likeLimits');
+    if (savedLimits) {
+      setLikeLimits(JSON.parse(savedLimits));
+    }
+    
+    // Clean up old like limits (older than 24 hours)
+    const now = Date.now();
+    const cleanedLimits: Record<string, LikeRecord> = {};
+    Object.entries(likeLimits).forEach(([key, record]) => {
+      if (now - record.timestamp < 24 * 60 * 60 * 1000) {
+        cleanedLimits[key] = record;
+      }
+    });
+    if (Object.keys(cleanedLimits).length !== Object.keys(likeLimits).length) {
+      setLikeLimits(cleanedLimits);
+      localStorage.setItem('likeLimits', JSON.stringify(cleanedLimits));
     }
     
     fetchFeed();
@@ -97,6 +122,25 @@ export default function PublicFeed() {
     const isLiked = likedPosts.has(entryId);
     const action = isLiked ? 'unlike' : 'like';
     
+    // Check rate limiting for likes (not unlikes)
+    if (action === 'like') {
+      const now = Date.now();
+      const userLikeKey = 'user_likes';
+      const likeRecord = likeLimits[userLikeKey];
+      
+      // Reset counter if it's been more than an hour
+      if (likeRecord && now - likeRecord.timestamp > 60 * 60 * 1000) {
+        const newLimits = { ...likeLimits };
+        delete newLimits[userLikeKey];
+        setLikeLimits(newLimits);
+        localStorage.setItem('likeLimits', JSON.stringify(newLimits));
+      } else if (likeRecord && likeRecord.count >= 10) {
+        // Rate limit: 10 likes per hour
+        alert('You\'ve reached the hourly like limit. Please try again later!');
+        return;
+      }
+    }
+    
     try {
       const response = await fetch('/api/like', {
         method: 'POST',
@@ -118,6 +162,21 @@ export default function PublicFeed() {
           newLikedPosts.delete(entryId);
         } else {
           newLikedPosts.add(entryId);
+          
+          // Update like limits
+          const now = Date.now();
+          const userLikeKey = 'user_likes';
+          const currentRecord = likeLimits[userLikeKey] || { timestamp: now, count: 0 };
+          
+          const newLimits = {
+            ...likeLimits,
+            [userLikeKey]: {
+              timestamp: currentRecord.timestamp,
+              count: currentRecord.count + 1
+            }
+          };
+          setLikeLimits(newLimits);
+          localStorage.setItem('likeLimits', JSON.stringify(newLimits));
         }
         setLikedPosts(newLikedPosts);
         
