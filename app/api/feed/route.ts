@@ -42,10 +42,10 @@ export async function GET() {
       console.log('Redis not configured, returning empty feed');
     }
     
-    // Return the latest 20 entries, sorted by most recent
+    // Return the latest 50 entries, sorted by most recent
     const recentEntries = entries
       .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 20);
+      .slice(0, 50);
     
     return NextResponse.json(
       { entries: recentEntries },

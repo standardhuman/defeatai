@@ -9,8 +9,6 @@ export default function Home() {
   const [outputText, setOutputText] = useState('');
   const [mode, setMode] = useState<DefeaterMode>('normal');
   const [customPhrases, setCustomPhrases] = useState<string[]>([]);
-  const [newPhrase, setNewPhrase] = useState('');
-  const [showCustomPanel, setShowCustomPanel] = useState(false);
   const [stats, setStats] = useState<{
     originalLength: number;
     defeatedLength: number;
@@ -71,16 +69,6 @@ export default function Home() {
     setStats(null);
   };
 
-  const handleAddPhrase = () => {
-    if (newPhrase.trim() && !customPhrases.includes(newPhrase.trim())) {
-      setCustomPhrases([...customPhrases, newPhrase.trim()]);
-      setNewPhrase('');
-    }
-  };
-
-  const handleRemovePhrase = (index: number) => {
-    setCustomPhrases(customPhrases.filter((_, i) => i !== index));
-  };
 
 
   const shareToTwitter = () => {
@@ -124,17 +112,9 @@ export default function Home() {
 
         <div className="bg-gray-800 rounded-lg shadow-xl p-6 mb-6">
           <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <label htmlFor="mode" className="block text-sm font-medium">
-                Defeat Mode
-              </label>
-              <button
-                onClick={() => setShowCustomPanel(!showCustomPanel)}
-                className="text-sm bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded transition-colors duration-200"
-              >
-                {showCustomPanel ? 'Hide' : 'Show'} Custom Phrases ({customPhrases.length})
-              </button>
-            </div>
+            <label htmlFor="mode" className="block text-sm font-medium mb-2">
+              Defeat Mode
+            </label>
             <select
               id="mode"
               value={mode}
@@ -146,45 +126,6 @@ export default function Home() {
               <option value="heavy">Heavy - Insert nonsense in EVERY sentence</option>
             </select>
           </div>
-
-          {showCustomPanel && (
-            <div className="mb-6 p-4 bg-gray-700 rounded-md">
-              <h3 className="font-semibold mb-3">Your Custom Phrases</h3>
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  value={newPhrase}
-                  onChange={(e) => setNewPhrase(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddPhrase()}
-                  placeholder="Enter your favorite nonsense phrase..."
-                  className="flex-1 px-3 py-2 bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button
-                  onClick={handleAddPhrase}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors duration-200"
-                >
-                  Add
-                </button>
-              </div>
-              {customPhrases.length > 0 ? (
-                <div className="max-h-40 overflow-y-auto">
-                  {customPhrases.map((phrase, index) => (
-                    <div key={index} className="flex justify-between items-center mb-2 p-2 bg-gray-600 rounded">
-                      <span className="text-sm">{phrase}</span>
-                      <button
-                        onClick={() => handleRemovePhrase(index)}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm">No custom phrases yet. Add your own nonsense!</p>
-              )}
-            </div>
-          )}
 
           <div className="mb-4">
             <label htmlFor="input" className="block text-sm font-medium mb-2">

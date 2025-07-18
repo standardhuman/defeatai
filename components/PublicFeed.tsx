@@ -16,6 +16,7 @@ export default function PublicFeed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [filterMode, setFilterMode] = useState<'recent' | 'likes'>('recent');
 
   const fetchFeed = async () => {
     try {
@@ -160,12 +161,52 @@ export default function PublicFeed() {
     );
   }
 
+  // Sort entries based on filter mode
+  const sortedEntries = [...entries].sort((a, b) => {
+    if (filterMode === 'likes') {
+      // Sort by likes (descending), then by timestamp
+      if (b.likes !== a.likes) {
+        return b.likes - a.likes;
+      }
+      return b.timestamp - a.timestamp;
+    }
+    // Default to recent (timestamp descending)
+    return b.timestamp - a.timestamp;
+  });
+
+  // Show up to 15 entries
+  const displayedEntries = sortedEntries.slice(0, 15);
+
   return (
     <div className="bg-gray-800 rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Community Feed</h2>
-        <div className="text-sm text-gray-400">
-          {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+        <div className="flex items-center gap-4">
+          <div className="flex bg-gray-700 rounded-md p-1">
+            <button
+              onClick={() => setFilterMode('recent')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                filterMode === 'recent' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Most Recent
+            </button>
+            <button
+              onClick={() => setFilterMode('likes')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                filterMode === 'likes' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Most Liked
+            </button>
+          </div>
+          <div className="text-sm text-gray-400">
+            {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+          </div>
         </div>
       </div>
       
@@ -175,8 +216,8 @@ export default function PublicFeed() {
           <p className="text-sm mt-2">Your defeated text will appear here for others to see.</p>
         </div>
       ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          {entries.map((entry) => (
+        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+          {displayedEntries.map((entry) => (
             <div key={entry.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
