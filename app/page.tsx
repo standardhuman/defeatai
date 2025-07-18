@@ -90,7 +90,15 @@ export default function Home() {
   };
 
   const shareToFacebook = () => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://monkeybot.wtf')}&quote=${encodeURIComponent(outputText.substring(0, 200))}`;
+    // Copy text to clipboard first since Facebook doesn't allow pre-filled text
+    const textToShare = `"${outputText.substring(0, 200)}${outputText.length > 200 ? '...' : ''}"`;
+    navigator.clipboard.writeText(textToShare);
+    
+    // Show a quick alert
+    alert('Text copied! Paste it into your Facebook post after the link.');
+    
+    // Open Facebook share dialog with just the URL
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://monkeybot.wtf')}`;
     window.open(url, '_blank');
   };
 
