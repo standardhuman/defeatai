@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 interface FeedEntry {
   id: string;
@@ -9,20 +9,36 @@ interface FeedEntry {
   mode: string;
 }
 
+// Initialize Redis client
+let redis: Redis | null = null;
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+} catch (error) {
+  console.log('Redis initialization failed:', error);
+}
+
 export async function GET() {
   try {
     // Try to get entries from KV store
     // If KV is not configured, fall back to empty array
     let entries: FeedEntry[] = [];
     
-    try {
-      const storedEntries = await kv.get<FeedEntry[]>('feed_entries');
-      if (storedEntries) {
-        entries = storedEntries;
+    if (redis) {
+      try {
+        const storedEntries = await redis.get<FeedEntry[]>('feed_entries');
+        if (storedEntries) {
+          entries = storedEntries;
+        }
+      } catch (redisError) {
+        console.log('Redis error:', redisError);
       }
-    } catch (kvError) {
-      // KV might not be configured in development
-      console.log('KV not configured, returning empty feed');
+    } else {
+      console.log('Redis not configured, returning empty feed');
     }
     
     // Return the latest 20 entries, sorted by most recent
@@ -71,25 +87,28 @@ export async function POST(request: NextRequest) {
       mode
     };
     
-    try {
-      // Get existing entries from KV
-      let entries: FeedEntry[] = [];
-      const storedEntries = await kv.get<FeedEntry[]>('feed_entries');
-      if (storedEntries) {
-        entries = storedEntries;
+    if (redis) {
+      try {
+        // Get existing entries from Redis
+        let entries: FeedEntry[] = [];
+        const storedEntries = await redis.get<FeedEntry[]>('feed_entries');
+        if (storedEntries) {
+          entries = storedEntries;
+        }
+        
+        // Add new entry and keep only last 100
+        entries.push(newEntry);
+        if (entries.length > 100) {
+          entries = entries.slice(-100);
+        }
+        
+        // Save back to Redis
+        await redis.set('feed_entries', entries);
+      } catch (redisError) {
+        console.log('Redis error:', redisError);
       }
-      
-      // Add new entry and keep only last 100
-      entries.push(newEntry);
-      if (entries.length > 100) {
-        entries = entries.slice(-100);
-      }
-      
-      // Save back to KV
-      await kv.set('feed_entries', entries);
-    } catch (kvError) {
-      // KV might not be configured in development
-      console.log('KV not configured, feed entry not persisted');
+    } else {
+      console.log('Redis not configured, feed entry not persisted');
     }
     
     return NextResponse.json({ 

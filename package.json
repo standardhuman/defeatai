@@ -13,7 +13,7 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
-    "@vercel/kv": "^3.0.0",
+    "@upstash/redis": "^1.35.1",
     "autoprefixer": "^10.4.21",
     "next": "14.2.0",
     "react": "^18",
