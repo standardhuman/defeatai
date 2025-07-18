@@ -84,7 +84,7 @@ export default function Home() {
 
 
   const shareToTwitter = () => {
-    const text = `Check out this AI-defeated text: "${outputText.substring(0, 200)}${outputText.length > 200 ? '...' : ''}"`;
+    const text = `"${outputText.substring(0, 200)}${outputText.length > 200 ? '...' : ''}"`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://monkeybot.wtf')}&hashtags=DefeatAI,AIProof`;
     window.open(url, '_blank');
   };

@@ -60,7 +60,7 @@ export default function PublicFeed() {
   };
 
   const shareToTwitter = (entry: FeedEntry) => {
-    const text = `Check out this AI-defeated text: "${entry.defeated.substring(0, 200)}${entry.defeated.length > 200 ? '...' : ''}"`;
+    const text = `"${entry.defeated.substring(0, 200)}${entry.defeated.length > 200 ? '...' : ''}"`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://monkeybot.wtf')}&hashtags=DefeatAI,AIProof`;
     window.open(url, '_blank');
   };
