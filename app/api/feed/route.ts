@@ -1,19 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
-// In a real app, this would be stored in a database
-// For now, we'll use a simple in-memory store
-let feedEntries: Array<{
+interface FeedEntry {
   id: string;
   original: string;
   defeated: string;
   timestamp: number;
   mode: string;
-}> = [];
+}
 
 export async function GET() {
   try {
+    // Try to get entries from KV store
+    // If KV is not configured, fall back to empty array
+    let entries: FeedEntry[] = [];
+    
+    try {
+      const storedEntries = await kv.get<FeedEntry[]>('feed_entries');
+      if (storedEntries) {
+        entries = storedEntries;
+      }
+    } catch (kvError) {
+      // KV might not be configured in development
+      console.log('KV not configured, returning empty feed');
+    }
+    
     // Return the latest 20 entries, sorted by most recent
-    const recentEntries = feedEntries
+    const recentEntries = entries
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 20);
     
@@ -50,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Create new entry
-    const newEntry = {
+    const newEntry: FeedEntry = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       original: original.trim(),
       defeated: defeated.trim(),
@@ -58,10 +71,25 @@ export async function POST(request: NextRequest) {
       mode
     };
     
-    // Add to feed (keep only last 100 entries to prevent memory issues)
-    feedEntries.push(newEntry);
-    if (feedEntries.length > 100) {
-      feedEntries = feedEntries.slice(-100);
+    try {
+      // Get existing entries from KV
+      let entries: FeedEntry[] = [];
+      const storedEntries = await kv.get<FeedEntry[]>('feed_entries');
+      if (storedEntries) {
+        entries = storedEntries;
+      }
+      
+      // Add new entry and keep only last 100
+      entries.push(newEntry);
+      if (entries.length > 100) {
+        entries = entries.slice(-100);
+      }
+      
+      // Save back to KV
+      await kv.set('feed_entries', entries);
+    } catch (kvError) {
+      // KV might not be configured in development
+      console.log('KV not configured, feed entry not persisted');
     }
     
     return NextResponse.json({ 
