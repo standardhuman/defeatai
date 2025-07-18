@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AIDefeater, DefeaterMode } from '@/lib/aiDefeater';
+import PublicFeed from '@/components/PublicFeed';
 
 export default function Home() {
   const [inputText, setInputText] = useState('');
@@ -16,6 +17,8 @@ export default function Home() {
     nonsenseInserted: number;
     percentageIncrease: number;
   } | null>(null);
+  const [shareToFeed, setShareToFeed] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   // Load custom phrases from localStorage on mount
   useEffect(() => {
@@ -58,6 +61,50 @@ export default function Home() {
 
   const handleRemovePhrase = (index: number) => {
     setCustomPhrases(customPhrases.filter((_, i) => i !== index));
+  };
+
+  const handleShareToFeed = async () => {
+    if (!inputText.trim() || !outputText.trim()) return;
+    
+    setIsSharing(true);
+    
+    try {
+      const response = await fetch('/api/feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          original: inputText,
+          defeated: outputText,
+          mode,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to share');
+      }
+      
+      // Success - could show a toast notification here
+      setShareToFeed(false);
+    } catch (error) {
+      console.error('Error sharing to feed:', error);
+      alert('Failed to share to feed. Please try again.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const shareToTwitter = () => {
+    const text = `Check out this AI-defeated text: "${outputText.substring(0, 200)}${outputText.length > 200 ? '...' : ''}"`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://monkeybot.wtf')}&hashtags=DefeatAI,AIProof`;
+    window.open(url, '_blank');
+  };
+
+  const shareToFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://monkeybot.wtf')}&quote=${encodeURIComponent(outputText.substring(0, 200))}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -223,8 +270,61 @@ export default function Home() {
                   </p>
                 </div>
               )}
+
+              {/* Sharing Section */}
+              <div className="bg-gray-700 rounded-md p-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold">Share Your Result</h3>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="shareToFeed"
+                      checked={shareToFeed}
+                      onChange={(e) => setShareToFeed(e.target.checked)}
+                      className="rounded"
+                    />
+                    <label htmlFor="shareToFeed" className="text-sm text-gray-300">
+                      Add to community feed
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={shareToTwitter}
+                    className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    <span>🐦</span>
+                    <span>Twitter</span>
+                  </button>
+                  
+                  <button
+                    onClick={shareToFacebook}
+                    className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    <span>📘</span>
+                    <span>Facebook</span>
+                  </button>
+                  
+                  {shareToFeed && (
+                    <button
+                      onClick={handleShareToFeed}
+                      disabled={isSharing}
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      <span>{isSharing ? '⏳' : '🌐'}</span>
+                      <span>{isSharing ? 'Sharing...' : 'Share to Feed'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             </>
           )}
+        </div>
+
+        {/* Community Feed */}
+        <div className="mb-8">
+          <PublicFeed />
         </div>
 
         <footer className="text-center text-gray-400 text-sm space-y-4">
